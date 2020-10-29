@@ -4,7 +4,6 @@ from Stats import *
 from ClickArea import *
 from MessageBoard import *
 
-
 def run_game():
     pygame.init()
     clock = pygame.time.Clock()
