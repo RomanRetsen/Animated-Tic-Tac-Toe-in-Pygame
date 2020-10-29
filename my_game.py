@@ -23,7 +23,7 @@ def run_game():
             updateScreen(game_screen, g_set, g_stats, areasList, mBoard)
         elif not g_stats.waiting_game_input and not g_stats.drawing_click_area:
             # This code comes into play once animation for X or O is done.
-            # Checking the board to winner and turning event checker ON.
+            # Checking the board to winner and turning event checker ON!
             if checkBoard(g_stats, areasList) == False:
                 g_stats.switch_turns()
                 mBoard.assignTurnMessage()
