@@ -1,4 +1,3 @@
 # Project exclude paths
-/venv/
-QuickTest.py
-ship.png
+/venv/QuickTest.py
+/venv/ship.png
