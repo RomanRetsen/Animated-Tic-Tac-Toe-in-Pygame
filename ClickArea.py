@@ -18,6 +18,7 @@ class ClickArea:
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
         self.state = 'b'
 
+        # Function for drawing O
         def drawing_click_area_o(self):
             if self.ellipseAnimationSlice < len(self.ellipseDots) - 1:
                 pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[self.ellipseAnimationSlice][1]),
@@ -43,10 +44,47 @@ class ClickArea:
 
         #list of functions of drawing sign "O"  to random pick from.
         self.oFunc = [drawing_click_area_o, drawing_click_area_o2]
+
+        #Function for drawing X
+        def drawing_click_area_x(self):
+            if self.currentx1 <= self.x1_2:
+                pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
+                                 (self.currentx1, self.calculatey(self.currentx1, self.slope1, self.b1)))
+                pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
+                                 (self.currentx2, self.calculatey(self.currentx2, self.slope2, self.b2)))
+
+                self.currentx1 += 1
+                self.currentx2 -= 1
+            else:
+                self.state = 'x'
+                self.g_stats.drawing_click_area = False
+
+        def drawing_click_area_x2(self):
+            print(self.currentx1, '---', int(self.x1_2 / 2))
+            if self.currentx1 <= self.x_half:
+                pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
+                                 (self.currentx1, self.calculatey(self.currentx1, self.slope1, self.b1)))
+                pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
+                                 (self.currentx2, self.calculatey(self.currentx2, self.slope2, self.b2)))
+                pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y2_2),
+                                 (self.currentx1, self.calculatey(self.currentx1, self.slope2, self.b2)))
+                pygame.draw.line(self.screen, self.linecolor, (self.x1_2, self.y1_2),
+                                 (self.currentx2, self.calculatey(self.currentx2, self.slope1, self.b1)))
+
+                self.currentx1 += 1
+                self.currentx2 -= 1
+            else:
+                self.state = 'x'
+                self.g_stats.drawing_click_area = False
+
+        #list of functions of drawing sign "X"  to random pick from.
+        self.xFunc = [drawing_click_area_x, drawing_click_area_x2]
+
         self.calculateCrossCoord()
         self.ellipseAnimationSlice = 0
         self.calculateEllipseCoord()
         self.randomChooseOFunc()
+        self.randomChooseXFunc()
 
     def clickAreaReset(self):
         self.state = 'b'
@@ -55,14 +93,20 @@ class ClickArea:
         self.ellipseAnimationSlice = 0
 
     def calculateCrossCoord(self):
+        #line 1
         self.currentx1 = self.x1_1 = self.x + self.signOffSetx
         self.y1_1 = self.y + self.signOffSety
         self.x1_2 = self.x + self.width - self.signOffSetx
         self.y1_2 = self.y + self.height - self.signOffSety
+        # line 2
         self.currentx2 = self.x2_1 = self.x + self.width - self.signOffSetx
         self.y2_1 = self.y + self.signOffSety
         self.x2_2 = self.x + self.signOffSetx
         self.y2_2 = self.y + self.height - self.signOffSety
+        # cross point
+        self.x_half = self.x + int(self.width /2 )
+        self.y_half = self.y + int(self.height /2 )
+        # slope and b info needed for line formula
         self.slope1 =  (self.y1_2 - self.y1_1) / (self.x1_2 - self.x1_1)
         self.b1 = self.y1_2 - self.slope1 * self.x1_2
         self.slope2 =  (self.y2_2 - self.y2_1) / (self.x2_2 - self.x2_1)
@@ -83,15 +127,13 @@ class ClickArea:
             self.t += 0.05
             index += 1
 
-        print(self.ellipseDots)
-
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
         if self.state == 'b':
             self.draw_click_area_blank()
         elif self.state == 'd':
             if self.g_stats.gamer_turn == 'x':
-                self.drawing_click_area_x()
+                self.chosenXFunc(self)
             elif self.g_stats.gamer_turn == 'o':
                 self.chosenOFunc(self)
         elif self.state == 'x':
@@ -110,18 +152,6 @@ class ClickArea:
         pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1), (self.x1_2, self.y1_2))
         pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1), (self.x2_2, self.y2_2))
 
-    def drawing_click_area_x(self):
-        if self.currentx1 <= self.x1_2:
-            pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
-                             (self.currentx1, self.calculatey(self.currentx1, self.slope1, self.b1)))
-            pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
-                             (self.currentx2, self.calculatey(self.currentx2, self.slope2, self.b2)))
-            self.currentx1 += 1
-            self.currentx2 -= 1
-        else:
-            self.state = 'x'
-            self.g_stats.drawing_click_area = False
-
     def calculatey(self, x, slope, b):
         return int((x * slope) + b)
 
@@ -137,3 +167,7 @@ class ClickArea:
             pass
         elif self.chosenOFunc == 'drawing_click_area_o2':
             random.shuffle(self.ellipseDots)
+
+
+    def randomChooseXFunc(self):
+        self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
