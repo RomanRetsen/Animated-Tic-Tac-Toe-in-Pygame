@@ -7,29 +7,28 @@ from MessageBoard import *
 def run_game():
     pygame.init()
     clock = pygame.time.Clock()
-    g_set = Settings(400, 400, 50)
+    g_set = Settings(boardwidth=400, boardheight=400, message_board_height=50)
     g_stats = Stats(g_set)
     game_screen = pygame.display.set_mode((g_set.game_screen_width,
                                            g_set.game_screen_height + g_set.message_board_height))
-    mBoard = MessageBoard(game_screen, g_set, g_stats)
+    messageBoard = MessageBoard(game_screen, g_set, g_stats)
     areasList = createClickAreas(game_screen, g_set, g_stats)
-    updateScreen(game_screen, g_set, g_stats, areasList, mBoard)
+    updateScreen(game_screen, g_set, g_stats, areasList, messageBoard)
     while True:
         clock.tick(120)
         if g_stats.waiting_game_input and not g_stats.drawing_click_area:
-            checkEvents(game_screen, g_set, g_stats, areasList, mBoard)
+            checkEvents(game_screen, g_set, g_stats, areasList, messageBoard)
         elif not g_stats.waiting_game_input and g_stats.drawing_click_area:
-            updateScreen(game_screen, g_set, g_stats, areasList, mBoard)
+            updateScreen(game_screen, g_set, g_stats, areasList, messageBoard)
         elif not g_stats.waiting_game_input and not g_stats.drawing_click_area:
             # This code comes into play once animation for X or O is done.
-            # Checking the board to winner and turning event checker ON!
+            # Checking the board to winner and turning event checker back ON!
             if checkBoard(g_stats, areasList) == False:
                 g_stats.switch_turns()
-                mBoard.assignTurnMessage()
+                messageBoard.assignTurnMessage()
             pygame.event.clear()
             g_stats.waiting_game_input = True
-            updateScreen(game_screen, g_set, g_stats, areasList, mBoard)
-
+            updateScreen(game_screen, g_set, g_stats, areasList, messageBoard)
 
 def checkEvents(game_screen, g_set, g_stats, areasList, mBoard):
     for event in pygame.event.get():
@@ -113,6 +112,7 @@ def createClickAreas(game_screen, g_set, g_stats):
     areasList = []
     for horizontal in range(3):
         for vertical in range(3):
+            #creating 9 ClickAreas based on RELATIVE coordinates (corelated to the whole board)
             areasList.append(ClickArea((horizontal * g_set.x1, vertical * g_set.y1), game_screen, g_set, g_stats))
     return areasList
 

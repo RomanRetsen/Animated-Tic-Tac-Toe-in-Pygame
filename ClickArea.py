@@ -20,13 +20,13 @@ class ClickArea:
         self.state = 'b'
 
         #list of functions of drawing sign "O"  to random pick from.
-        self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3]
+        self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
+                      self.drawing_click_area_o4]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3]
 
         self.calculateCrossCoord()
-        self.ellipseAnimationSlice = 0
         self.calculateEllipseCoord()
         self.randomChooseOFunc()
         self.randomChooseXFunc()
@@ -45,6 +45,7 @@ class ClickArea:
 
     def clickAreaResetO(self):
         self.ellipseAnimationSlice = 0
+        self.ellipseDotsBlip.clear()
 
     def calculateCrossCoord(self):
         #line 1
@@ -69,10 +70,11 @@ class ClickArea:
 
     #For drawing "O" different approach was chosen. All coord. of ellipse put in list
     def calculateEllipseCoord(self):
+        self.ellipseAnimationSlice = 0
         self.t = 0.1
         minorRadius = int((self.width - self.signOffSetx * 4) / 2)
         majorRadius = int((self.height - self.signOffSety * 2) / 2)
-
+        self.ellipseDotsBlip = []
         #generating list of dots for drawing ellipse
         #formula is adjusted on half of width and height of cell
         # to place ellipse in the middle of cell
@@ -93,7 +95,7 @@ class ClickArea:
             if self.g_stats.gamer_turn == 'x':
                 self.chosenXFunc()
             elif self.g_stats.gamer_turn == 'o':
-                self.chosenOFunc(self)
+                self.chosenOFunc()
         elif self.state == 'x':
             pass
             #old code. none animation drawing of x
@@ -121,6 +123,7 @@ class ClickArea:
 
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        # self.chosenOFunc = self.oFunc[2]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -204,6 +207,8 @@ class ClickArea:
             for item in range(len(self.ellipseDots) - 1):
                 pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[item][1]),
                                  (self.ellipseDots[item + 1][1]))
+            pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[0][1]),
+                             (self.ellipseDots[-1][1]))
             self.state = 'o'
             self.g_stats.drawing_click_area = False
 
@@ -217,5 +222,24 @@ class ClickArea:
             for item in range(len(self.ellipseDots) - 1):
                 pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[item][1]),
                                  (self.ellipseDots[item + 1][1]))
+            pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[0][1]),
+                             (self.ellipseDots[-1][1]))
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
+
+    def drawing_click_area_o4(self):
+        self.draw_click_area_blank()
+
+        if self.x + self.growingx <= self.x + self.width:
+            pygame.draw.line(self.screen, self.linecolor, (self.x + self.growingx, self.y),
+                             (self.x + self.growingx, self.y + self.height))
+            self.growingx += 1
+        else:
+            self.ellipseDots.sort(key=lambda x: x[0])
+            for item in range(len(self.ellipseDots) - 1):
+                pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[item][1]),
+                                 (self.ellipseDots[item + 1][1]))
+            pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[0][1]),
+                             (self.ellipseDots[-1][1]))
             self.state = 'o'
             self.g_stats.drawing_click_area = False
