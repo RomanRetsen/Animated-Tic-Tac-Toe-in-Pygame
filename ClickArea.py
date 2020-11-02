@@ -69,7 +69,7 @@ class ClickArea:
 
     #For drawing "O" different approach was chosen. All coord. of ellipse put in list
     def calculateEllipseCoord(self):
-        self.t = 0.0
+        self.t = 0.1
         minorRadius = int((self.width - self.signOffSetx * 4) / 2)
         majorRadius = int((self.height - self.signOffSety * 2) / 2)
 
