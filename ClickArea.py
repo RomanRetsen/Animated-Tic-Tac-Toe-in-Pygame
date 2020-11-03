@@ -1,3 +1,4 @@
+import bisect
 import random
 import pygame
 import math
@@ -122,8 +123,8 @@ class ClickArea:
         return int((x * slope) + b)
 
     def randomChooseOFunc(self):
-        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[2]
+        # self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        self.chosenOFunc = self.oFunc[3]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -133,7 +134,7 @@ class ClickArea:
 
     def randomChooseXFunc(self):
         self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
-        # self.chosenXFunc = self.xFunc[2]
+        # self.chosenXFunc = self.xFunc[3]
 
     #Function for drawing X
     def drawing_click_area_x(self):
@@ -233,13 +234,29 @@ class ClickArea:
         if self.x + self.growingx <= self.x + self.width:
             pygame.draw.line(self.screen, self.linecolor, (self.x + self.growingx, self.y),
                              (self.x + self.growingx, self.y + self.height))
+            #adding ellipses dots that have same x param
+            for dot in self.ellipseDots:
+                if dot[1][0] == self.x + self.growingx:
+                    bisect.insort(self.ellipseDotsBlip, dot)
+                else:
+                    if len(self.ellipseDotsBlip) > 1:
+                        pygame.draw.line(self.screen, self.linecolor, (self.ellipseDotsBlip[0][1]),
+                                         (self.ellipseDotsBlip[-1][1]))
+            #drawing ellipses dots that were bypassed by scanning line
+
+            if len(self.ellipseDotsBlip) >= 0:
+                for index in range(len(self.ellipseDotsBlip) - 1):
+                    pygame.draw.line(self.screen, self.linecolor, (self.ellipseDotsBlip[index][1]),
+                                     (self.ellipseDotsBlip[index + 1][1]))
+
             self.growingx += 1
+
         else:
-            self.ellipseDots.sort(key=lambda x: x[0])
-            for item in range(len(self.ellipseDots) - 1):
-                pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[item][1]),
-                                 (self.ellipseDots[item + 1][1]))
-            pygame.draw.line(self.screen, self.linecolor, (self.ellipseDots[0][1]),
-                             (self.ellipseDots[-1][1]))
+            if len(self.ellipseDotsBlip) >= 0:
+                for index in range(len(self.ellipseDotsBlip) - 1):
+                    pygame.draw.line(self.screen, self.linecolor, (self.ellipseDotsBlip[index][1]),
+                                     (self.ellipseDotsBlip[index + 1][1]))
+            pygame.draw.line(self.screen, self.linecolor, (self.ellipseDotsBlip[0][1]),
+                             (self.ellipseDotsBlip[-1][1]))
             self.state = 'o'
             self.g_stats.drawing_click_area = False
