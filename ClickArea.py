@@ -26,7 +26,7 @@ class ClickArea:
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
-                      self.drawing_click_area_x4]
+                      self.drawing_click_area_x4, self.drawing_click_area_x5]
 
         self.calculateCrossCoord()
         self.calculateEllipseCoord()
@@ -116,6 +116,9 @@ class ClickArea:
     def calculatey(self, x, slope, b):
         return int((x * slope) + b)
 
+    def calculatex(self, y, slope, b):
+        return int((y - b) / slope)
+
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
         # self.chosenOFunc = self.oFunc[2]
@@ -128,7 +131,7 @@ class ClickArea:
 
     def randomChooseXFunc(self):
         self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
-        # self.chosenXFunc = self.xFunc[0]
+        # self.chosenXFunc = self.xFunc[4]
 
     #Function for drawing X
     def drawing_click_area_x(self):
@@ -208,6 +211,32 @@ class ClickArea:
             pygame.draw.line(self.screen, self.linecolor,
                              (self.x2_2, self.y2_2),
                              (self.x2_1, self.y2_1))
+            self.state = 'x'
+            self.g_stats.drawing_click_area = False
+
+    def drawing_click_area_x5(self):
+        self.draw_click_area_blank()
+        if self.y + self.growingy <= self.y + self.height:
+            pygame.draw.line(self.screen, self.linecolor, (self.x, self.y + self.growingy),
+                             (self.x + self.width, self.y + self.growingy))
+            if self.y + self.growingy >= self.y1_1:
+                animatedy = self.y + self.growingy
+                if self.y + self.growingy >= self.y1_2:
+                    animatedy = self.y1_2
+                pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
+                                 (self.calculatex(animatedy, self.slope1, self.b1),
+                                  animatedy))
+                pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
+                                 (self.calculatex(animatedy, self.slope2, self.b2),
+                                  animatedy))
+            self.growingy += 1
+        else:
+            pygame.draw.line(self.screen, self.linecolor,
+                             (self.x1_1, self.y1_1),
+                             (self.x1_2, self.y1_2))
+            pygame.draw.line(self.screen, self.linecolor,
+                             (self.x2_1, self.y2_1),
+                             (self.x2_2, self.y2_2))
             self.state = 'x'
             self.g_stats.drawing_click_area = False
 
