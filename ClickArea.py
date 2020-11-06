@@ -25,7 +25,8 @@ class ClickArea:
                       self.drawing_click_area_o4, self.drawing_click_area_o5]
 
         #list of functions of drawing sign "X"  to random pick from.
-        self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3]
+        self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
+                      self.drawing_click_area_x4]
 
         self.calculateCrossCoord()
         self.calculateEllipseCoord()
@@ -34,28 +35,18 @@ class ClickArea:
 
     def clickAreaReset(self):
         self.state = 'b'
-        self.clickAreaResetX()
+        self.calculateCrossCoord()
+        self.calculateEllipseCoord()
         self.randomChooseXFunc()
-        self.clickAreaResetO()
         self.randomChooseOFunc()
 
-    def clickAreaResetX(self):
-        self.currentx1 = self.x1_1
-        self.currentx2 = self.x2_1
-        self.growingx = 0
-        self.growingy = 0
-
-    def clickAreaResetO(self):
-        self.ellipseAnimationSlice = 0
-        self.ellipseDotsBlip.clear()
-
     def calculateCrossCoord(self):
-        #line 1
+        #line 1 . It's 2 points - top left and bottom right
         self.currentx1 = self.x1_1 = self.x + self.signOffSetx
         self.y1_1 = self.y + self.signOffSety
         self.x1_2 = self.x + self.width - self.signOffSetx
         self.y1_2 = self.y + self.height - self.signOffSety
-        # line 2
+        # line 2. 2 points - top right and bottom left
         self.currentx2 = self.x2_1 = self.x + self.width - self.signOffSetx
         self.y2_1 = self.y + self.signOffSety
         self.x2_2 = self.x + self.signOffSetx
@@ -89,7 +80,7 @@ class ClickArea:
             self.ellipseDots.append([index, tuple((tempx, tempy))])
             self.t += 0.05
             index += 1
-
+    ################################################################
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
         if self.state == 'b':
@@ -98,6 +89,7 @@ class ClickArea:
             if self.g_stats.gamer_turn == 'x':
                 self.chosenXFunc()
             elif self.g_stats.gamer_turn == 'o':
+                print(self.chosenOFunc.__name__)
                 self.chosenOFunc()
         elif self.state == 'x':
             pass
@@ -126,7 +118,7 @@ class ClickArea:
 
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[4]
+        # self.chosenOFunc = self.oFunc[2]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -136,35 +128,37 @@ class ClickArea:
 
     def randomChooseXFunc(self):
         self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
-        # self.chosenXFunc = self.xFunc[3]
+        # self.chosenXFunc = self.xFunc[0]
 
     #Function for drawing X
     def drawing_click_area_x(self):
-        if self.currentx1 <= self.x1_2:
+        if self.x1_1 + self.growingx <= self.x1_2:
             pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
-                             (self.currentx1, self.calculatey(self.currentx1, self.slope1, self.b1)))
+                             (self.x1_1 + self.growingx,
+                              self.calculatey(self.x1_1 + self.growingx, self.slope1, self.b1)))
             pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
-                             (self.currentx2, self.calculatey(self.currentx2, self.slope2, self.b2)))
-
-            self.currentx1 += 1
-            self.currentx2 -= 1
+                             (self.x2_1 - self.growingx,
+                              self.calculatey(self.x2_1 - self.growingx, self.slope2, self.b2)))
+            self.growingx += 1
         else:
             self.state = 'x'
             self.g_stats.drawing_click_area = False
 
     def drawing_click_area_x2(self):
-        if self.currentx1 <= self.x_half:
+        if self.x1_1 + self.growingx <= self.x_half:
             pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
-                             (self.currentx1, self.calculatey(self.currentx1, self.slope1, self.b1)))
-            pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
-                             (self.currentx2, self.calculatey(self.currentx2, self.slope2, self.b2)))
-            pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y2_2),
-                             (self.currentx1, self.calculatey(self.currentx1, self.slope2, self.b2)))
+                             (self.x1_1 + self.growingx,
+                              self.calculatey(self.x1_1 + self.growingx, self.slope1, self.b1)))
             pygame.draw.line(self.screen, self.linecolor, (self.x1_2, self.y1_2),
-                             (self.currentx2, self.calculatey(self.currentx2, self.slope1, self.b1)))
-
-            self.currentx1 += 1
-            self.currentx2 -= 1
+                             (self.x1_2 - self.growingx,
+                              self.calculatey(self.x1_2 - self.growingx, self.slope1, self.b1)))
+            pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1),
+                             (self.x2_1 - self.growingx,
+                              self.calculatey(self.x2_1 - self.growingx, self.slope2, self.b2)))
+            pygame.draw.line(self.screen, self.linecolor, (self.x2_2, self.y2_2),
+                             (self.x2_2 + self.growingx,
+                              self.calculatey(self.x2_2 + self.growingx, self.slope2, self.b2)))
+            self.growingx += 1
         else:
             self.state = 'x'
             self.g_stats.drawing_click_area = False
@@ -184,9 +178,36 @@ class ClickArea:
                              (self.x_half + self.growingx,
                               self.calculatey(self.x_half + self.growingx, self.slope2, self.b2)))
             self.growingx += 1
-            self.currentx1 += 1
-            self.currentx2 -= 1
         else:
+            self.state = 'x'
+            self.g_stats.drawing_click_area = False
+
+    def drawing_click_area_x4(self):
+        print(self.growingx)
+        self.draw_click_area_blank()
+        if self.x + self.growingx <= self.x + self.width:
+            pygame.draw.line(self.screen, self.linecolor, (self.x + self.growingx, self.y),
+                             (self.x + self.growingx, self.y + self.height))
+            if self.x + self.growingx >= self.x1_1:
+                animatedx = self.x + self.growingx
+                if self.x + self.growingx > self.x1_2:
+                    animatedx = self.x1_2
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.x1_1, self.y1_1),
+                                 (animatedx,
+                                  self.calculatey(animatedx, self.slope1, self.b1)))
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.x2_2, self.y2_2),
+                                 (animatedx,
+                                  self.calculatey(animatedx, self.slope2, self.b2)))
+            self.growingx += 1
+        else:
+            pygame.draw.line(self.screen, self.linecolor,
+                             (self.x1_1, self.y1_1),
+                             (self.x1_2, self.y1_2))
+            pygame.draw.line(self.screen, self.linecolor,
+                             (self.x2_2, self.y2_2),
+                             (self.x2_1, self.y2_1))
             self.state = 'x'
             self.g_stats.drawing_click_area = False
 
