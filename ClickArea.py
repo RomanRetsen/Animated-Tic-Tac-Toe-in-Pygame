@@ -22,7 +22,7 @@ class ClickArea:
 
         #list of functions of drawing sign "O"  to random pick from.
         self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
-                      self.drawing_click_area_o4, self.drawing_click_area_o5]
+                      self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
@@ -73,11 +73,15 @@ class ClickArea:
         #formula is adjusted on half of width and height of cell
         # to place ellipse in the middle of cell
         self.ellipseDots = []
+        self.ellipseDotsScattered = []
         index = 0
         while self.t < 2 * math.pi:
             tempx = int(self.x + minorRadius * math.cos(self.t) + int(self.width / 2))
             tempy = int(self.y + majorRadius * math.sin(self.t) + int(self.height / 2))
             self.ellipseDots.append([index, tuple((tempx, tempy))])
+            self.ellipseDotsScattered.append([index, list([tempx, tempy]),
+                                              list([random.randint(self.x, self.x + self.width),
+                                                    random.randint(self.y, self.y + self.height)])])
             self.t += 0.05
             index += 1
     ################################################################
@@ -121,7 +125,7 @@ class ClickArea:
 
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[2]
+        # self.chosenOFunc = self.oFunc[5]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -339,3 +343,51 @@ class ClickArea:
                              (self.ellipseDotsBlip[-1][1]))
             self.state = 'o'
             self.g_stats.drawing_click_area = False
+
+
+    def drawing_click_area_o6(self):
+        self.draw_click_area_blank()
+
+        scattered_dots_arranged = True
+        for index in range(len(self.ellipseDotsScattered) ):
+            if ((self.ellipseDotsScattered[index][1][0] != self.ellipseDotsScattered[index][2][0]) or
+                    (self.ellipseDotsScattered[index][1][1] != self.ellipseDotsScattered[index][2][1])):
+                self.approachToLocation(index, self.ellipseDotsScattered)
+                scattered_dots_arranged = False
+
+        if not scattered_dots_arranged:
+            for index in range(len(self.ellipseDotsScattered) ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index][2]))
+        else:
+            for index in range(len(self.ellipseDotsScattered) -1 ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index + 1][2]))
+            pygame.draw.line(self.screen, self.linecolor,
+                             self.ellipseDotsScattered[0][2], self.ellipseDotsScattered[-1][2])
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
+
+
+    def approachToLocation(self, index, ellipseDotsScattered):
+        #increment x param if needed
+        if ellipseDotsScattered[index][2][0] > ellipseDotsScattered[index][1][0]:
+            ellipseDotsScattered[index][2][0] -= 1
+        elif ellipseDotsScattered[index][2][0] < ellipseDotsScattered[index][1][0]:
+            ellipseDotsScattered[index][2][0] += 1
+        else:
+            pass
+        #increment y param if needed
+        if ellipseDotsScattered[index][2][1] > ellipseDotsScattered[index][1][1]:
+            ellipseDotsScattered[index][2][1] -= 1
+        elif ellipseDotsScattered[index][2][1] < ellipseDotsScattered[index][1][1]:
+            ellipseDotsScattered[index][2][1] += 1
+        else:
+            pass
+
+
+
+
+
+
+
