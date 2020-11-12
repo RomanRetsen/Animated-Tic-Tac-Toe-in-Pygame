@@ -25,7 +25,7 @@ class ClickArea:
         #list of functions of drawing sign "O"  to random pick from.
         self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
                       self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6,
-                      self.drawing_click_area_o7, self.drawing_click_area_o8]
+                      self.drawing_click_area_o7, self.drawing_click_area_o8, self.drawing_click_area_o9]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
