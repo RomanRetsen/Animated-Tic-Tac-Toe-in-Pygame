@@ -4,6 +4,7 @@ import pygame
 import math
 
 class ClickArea:
+
     def __init__(self, position, screen, g_set, g_stats):
         self.x, self.y = position
         self.screen = screen
@@ -11,27 +12,26 @@ class ClickArea:
         self.screen_rect = screen.get_rect()
         self.width = g_set.click_area_width
         self.height = g_set.click_area_height
+        self.centerx = position[0] + int(g_set.click_area_width / 2)
+        self.centery = position[1] + int(g_set.click_area_height /  2)
 
-        # sign "x" is not drawn from the edges of area(square). Buffer offset is set here
+        # sign "x" is not drawn from the edges of area(square). Space offset is set here
         self.signOffSetx = int(self.width * 0.1)
         self.signOffSety = int(self.height * 0.1)
         self.backgroundcolor = (255, 255, 255)
         self.linecolor = (0, 0, 255)
         self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-        self.state = 'b'
 
         #list of functions of drawing sign "O"  to random pick from.
         self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
-                      self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6]
+                      self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6,
+                      self.drawing_click_area_o7, self.drawing_click_area_o8]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
                       self.drawing_click_area_x4, self.drawing_click_area_x5]
 
-        self.calculateCrossCoord()
-        self.calculateEllipseCoord()
-        self.randomChooseOFunc()
-        self.randomChooseXFunc()
+        self.clickAreaReset()
 
     def clickAreaReset(self):
         self.state = 'b'
@@ -74,6 +74,7 @@ class ClickArea:
         # to place ellipse in the middle of cell
         self.ellipseDots = []
         self.ellipseDotsScattered = []
+        self.ellipseDotsScatteredQuadrated = []
         index = 0
         while self.t < 2 * math.pi:
             tempx = int(self.x + minorRadius * math.cos(self.t) + int(self.width / 2))
@@ -82,8 +83,28 @@ class ClickArea:
             self.ellipseDotsScattered.append([index, list([tempx, tempy]),
                                               list([random.randint(self.x, self.x + self.width),
                                                     random.randint(self.y, self.y + self.height)])])
+            self.generatedEllipseDotsSQ(index, tempx, tempy)
             self.t += 0.05
             index += 1
+
+    def generatedEllipseDotsSQ(self, index, destinationx, destinationy):
+        if destinationx <= self.centerx and destinationy <= self.centery:
+            self.ellipseDotsScatteredQuadrated.append([index, list([destinationx, destinationy]),
+                                              list([random.randint(self.x, destinationx),
+                                                    random.randint(self.y, destinationy)])])
+        elif destinationx >= self.centerx and destinationy >= self.centery:
+            self.ellipseDotsScatteredQuadrated.append([index, list([destinationx, destinationy]),
+                                                       list([random.randint(destinationx, self.x + self.width),
+                                                             random.randint(destinationy, self.y + self.height)])])
+        elif destinationx < self.centerx and destinationy > self.centery:
+            self.ellipseDotsScatteredQuadrated.append([index, list([destinationx, destinationy]),
+                                                       list([random.randint(self.x, destinationx),
+                                                             random.randint(destinationy, self.y + self.height)])])
+        elif destinationx > self.centerx and destinationy < self.centery:
+            self.ellipseDotsScatteredQuadrated.append([index, list([destinationx, destinationy]),
+                                                       list([random.randint(destinationx, self.x + self.width),
+                                                             random.randint(self.y, destinationy)])])
+
     ################################################################
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
@@ -124,8 +145,8 @@ class ClickArea:
         return int((y - b) / slope)
 
     def randomChooseOFunc(self):
-        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[5]
+        # self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        self.chosenOFunc = self.oFunc[5]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -368,6 +389,80 @@ class ClickArea:
             self.state = 'o'
             self.g_stats.drawing_click_area = False
 
+
+    def drawing_click_area_o7(self):
+        self.draw_click_area_blank()
+        scattered_dots_arranged = True
+        for index in range(len(self.ellipseDotsScatteredQuadrated) ):
+            if ((self.ellipseDotsScatteredQuadrated[index][1][0] != self.ellipseDotsScatteredQuadrated[index][2][0]) or
+                    (self.ellipseDotsScatteredQuadrated[index][1][1] != self.ellipseDotsScatteredQuadrated[index][2][1])):
+                self.approachToLocation(index, self.ellipseDotsScatteredQuadrated)
+                scattered_dots_arranged = False
+
+        if not scattered_dots_arranged:
+            for index in range(len(self.ellipseDotsScatteredQuadrated) ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScatteredQuadrated[index][2]),
+                                 (self.ellipseDotsScatteredQuadrated[index][2]))
+        else:
+            for index in range(len(self.ellipseDotsScatteredQuadrated) -1 ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScatteredQuadrated[index][2]),
+                                 (self.ellipseDotsScatteredQuadrated[index + 1][2]))
+            pygame.draw.line(self.screen, self.linecolor,
+                             self.ellipseDotsScatteredQuadrated[0][2],
+                             self.ellipseDotsScatteredQuadrated[-1][2])
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
+
+
+    def drawing_click_area_o8(self):
+        scattered_dots_arranged = True
+        for index in range(len(self.ellipseDotsScattered) ):
+            if ((self.ellipseDotsScattered[index][1][0] != self.ellipseDotsScattered[index][2][0]) or
+                    (self.ellipseDotsScattered[index][1][1] != self.ellipseDotsScattered[index][2][1])):
+                self.approachToLocation(index, self.ellipseDotsScattered)
+                scattered_dots_arranged = False
+
+        if not scattered_dots_arranged:
+            for index in range(len(self.ellipseDotsScattered) ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index][2]))
+        else:
+            self.draw_click_area_blank()
+            for index in range(len(self.ellipseDotsScattered) -1 ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index + 1][2]))
+            pygame.draw.line(self.screen, self.linecolor,
+                             self.ellipseDotsScattered[0][2], self.ellipseDotsScattered[-1][2])
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
+
+
+    def drawing_click_area_o9(self):
+        scattered_dots_arranged = True
+        for index in range(len(self.ellipseDotsScatteredQuadrated) ):
+            if ((self.ellipseDotsScatteredQuadrated[index][1][0] != self.ellipseDotsScatteredQuadrated[index][2][0]) or
+                    (self.ellipseDotsScatteredQuadrated[index][1][1] != self.ellipseDotsScatteredQuadrated[index][2][1])):
+                self.approachToLocation(index, self.ellipseDotsScatteredQuadrated)
+                scattered_dots_arranged = False
+
+        if not scattered_dots_arranged:
+            for index in range(len(self.ellipseDotsScatteredQuadrated) ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScatteredQuadrated[index][2]),
+                                 (self.ellipseDotsScatteredQuadrated[index][2]))
+        else:
+            self.draw_click_area_blank()
+            for index in range(len(self.ellipseDotsScatteredQuadrated) -1 ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScatteredQuadrated[index][2]),
+                                 (self.ellipseDotsScatteredQuadrated[index + 1][2]))
+            pygame.draw.line(self.screen, self.linecolor,
+                             self.ellipseDotsScatteredQuadrated[0][2],
+                             self.ellipseDotsScatteredQuadrated[-1][2])
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
 
     def approachToLocation(self, index, ellipseDotsScattered):
         #increment x param if needed
