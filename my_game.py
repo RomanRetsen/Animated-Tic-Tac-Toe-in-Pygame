@@ -45,6 +45,9 @@ def checkClickedArea(game_screen, g_stats, areasList, mouseLocation, mBoard):
         for area in areasList:
             if area.rect.collidepoint(mouseLocation):
                 if area.state == 'b':
+                    area.mouseClickLocationx = mouseLocation[0]
+                    area.mouseClickLocationy = mouseLocation[1]
+                    area.generateAdjustedXCoor()
                     area.state = 'd'
                     g_stats.drawing_click_area = True
                     g_stats.waiting_game_input = False

@@ -3,6 +3,8 @@ class Stats:
         self.g_set = g_set
         self.waiting_game_input = True
         self.drawing_click_area = False
+        self.drawing_stage1_x = False
+        self.drawing_stage2_x = False
         self.game_over = False
         self.gamer_turn = 'x'
         self.winningLine = None

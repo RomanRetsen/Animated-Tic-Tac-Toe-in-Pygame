@@ -12,8 +12,9 @@ class ClickArea:
         self.screen_rect = screen.get_rect()
         self.width = g_set.click_area_width
         self.height = g_set.click_area_height
-        self.centerx = position[0] + int(g_set.click_area_width / 2)
-        self.centery = position[1] + int(g_set.click_area_height /  2)
+        #center of the cell and defaulf mouse click are the same
+        self.centerx = self.mouseClickLocationx = position[0] + int(g_set.click_area_width / 2)
+        self.centery = self.mouseClickLocationy = position[1] + int(g_set.click_area_height /  2)
 
         # sign "x" is not drawn from the edges of area(square). Space offset is set here
         self.signOffSetx = int(self.width * 0.1)
@@ -29,7 +30,7 @@ class ClickArea:
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
-                      self.drawing_click_area_x4, self.drawing_click_area_x5]
+                      self.drawing_click_area_x4, self.drawing_click_area_x5, self.drawing_click_area_x6]
 
         self.clickAreaReset()
 
@@ -46,14 +47,15 @@ class ClickArea:
         self.y1_1 = self.y + self.signOffSety
         self.x1_2 = self.x + self.width - self.signOffSetx
         self.y1_2 = self.y + self.height - self.signOffSety
+        length_of_line = int(math.sqrt((self.x1_1 - self.x1_2)**2 + (self.y1_1 - self.y1_2)**2))
         # line 2. 2 points - top right and bottom left
         self.currentx2 = self.x2_1 = self.x + self.width - self.signOffSetx
         self.y2_1 = self.y + self.signOffSety
         self.x2_2 = self.x + self.signOffSetx
         self.y2_2 = self.y + self.height - self.signOffSety
         # cross point
-        self.x_half = self.x + int(self.width /2 )
-        self.y_half = self.y + int(self.height /2 )
+        self.x_half = self.mouseClickLocationx = self.x + int(self.width /2 )
+        self.y_half = self.mouseClickLocationy = self.y + int(self.height /2 )
         self.growingx = 0
         self.growingy = 0
         # slope and b info needed for line formula
@@ -61,6 +63,9 @@ class ClickArea:
         self.b1 = self.y1_2 - self.slope1 * self.x1_2
         self.slope2 =  (self.y2_2 - self.y2_1) / (self.x2_2 - self.x2_1)
         self.b2 = self.y2_2 - self.slope2 * self.x2_2
+        # Two stages for drawing X
+        self.stage1_x_done = False
+        self.stage2_x_done = False
 
     #For drawing "O" different approach was chosen. All coord. of ellipse put in list
     def calculateEllipseCoord(self):
@@ -108,31 +113,31 @@ class ClickArea:
     ################################################################
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
-        if self.state == 'b':
+        if (self.state == 'b' and not self.g_stats.drawing_click_area) \
+                or ( self.state == 'b' and self.g_stats.drawing_stage2_x):
             self.draw_click_area_blank()
         elif self.state == 'd':
             if self.g_stats.gamer_turn == 'x':
                 self.chosenXFunc()
             elif self.g_stats.gamer_turn == 'o':
-                print(self.chosenOFunc.__name__)
                 self.chosenOFunc()
         elif self.state == 'x':
-            pass
             #old code. none animation drawing of x
-            #self.draw_click_area_x()
+            self.draw_click_area_x()
         elif self.state == 'o':
-            pass
             #old code. none animation drawing of o
-            #self.draw_click_area_o()
+            self.draw_click_area_o()
 
     def draw_click_area_blank(self):
         self.screen.fill(self.backgroundcolor, self.rect)
 
     def draw_click_area_x(self):
+        self.draw_click_area_blank()
         pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1), (self.x1_2, self.y1_2))
         pygame.draw.line(self.screen, self.linecolor, (self.x2_1, self.y2_1), (self.x2_2, self.y2_2))
 
     def draw_click_area_o(self):
+        self.draw_click_area_blank()
         self.screen.fill(self.backgroundcolor, self.rect)
         pygame.draw.ellipse(self.screen, self.linecolor,
                             (self.x + (self.signOffSetx * 2), self.y + self.signOffSety,
@@ -145,8 +150,8 @@ class ClickArea:
         return int((y - b) / slope)
 
     def randomChooseOFunc(self):
-        # self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        self.chosenOFunc = self.oFunc[5]
+        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        # self.chosenOFunc = self.oFunc[5]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o':
             pass
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
@@ -156,7 +161,20 @@ class ClickArea:
 
     def randomChooseXFunc(self):
         self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
-        # self.chosenXFunc = self.xFunc[4]
+        # self.chosenXFunc = self.xFunc[5]
+
+    def generateAdjustedXCoor(self):
+        self.correctionx = self.mouseClickLocationx - self.centerx
+        self.correctiony = self.mouseClickLocationy - self.centery
+        self.x1_1_adj = self.x1_1 + self.correctionx
+        self.x1_2_adj = self.x1_2 + self.correctionx
+        self.y1_2_adj = self.y1_2 + self.correctiony
+        self.x2_1_adj = self.x2_1 + self.correctionx
+        self.x2_2_adj = self.x2_2 + self.correctionx
+        self.y2_2_adj = self.y2_2 + self.correctiony
+
+        self.b1_adj = self.y1_2_adj - self.slope1 * self.x1_2_adj
+        self.b2_adj = self.y2_2_adj - self.slope2 * self.x2_2_adj
 
     #Function for drawing X
     def drawing_click_area_x(self):
@@ -211,7 +229,6 @@ class ClickArea:
             self.g_stats.drawing_click_area = False
 
     def drawing_click_area_x4(self):
-        print(self.growingx)
         self.draw_click_area_blank()
         if self.x + self.growingx <= self.x + self.width:
             pygame.draw.line(self.screen, self.linecolor, (self.x + self.growingx, self.y),
@@ -264,6 +281,57 @@ class ClickArea:
                              (self.x2_2, self.y2_2))
             self.state = 'x'
             self.g_stats.drawing_click_area = False
+
+    def drawing_click_area_x6(self):
+        if not self.stage1_x_done:
+            if self.x1_1_adj <= self.mouseClickLocationx - self.growingx:
+                self.drawing_adjusted_x()
+                self.growingx += 1
+            else:
+                self.stage1_x_done = True
+                self.g_stats.drawing_stage2_x = True
+        elif self.stage1_x_done and not self.stage2_x_done:
+            if self.mouseClickLocationx != self.centerx or self.mouseClickLocationy != self.centery:
+                self.draw_click_area_blank()
+                self.approachXToCenter()
+                self.generateAdjustedXCoor()
+                self.drawing_adjusted_x()
+            else:
+                self.stage2_x_done = True
+                self.g_stats.drawing_stage2_x = False
+        elif self.stage1_x_done and self.stage2_x_done:
+            self.state = 'x'
+            self.g_stats.drawing_click_area = False
+
+    def drawing_adjusted_x(self):
+        pygame.draw.line(self.screen, self.linecolor, (self.mouseClickLocationx, self.mouseClickLocationy),
+                         (self.mouseClickLocationx - self.growingx,
+                          self.calculatey(self.mouseClickLocationx - self.growingx, self.slope1, self.b1_adj)))
+        pygame.draw.line(self.screen, self.linecolor, (self.mouseClickLocationx, self.mouseClickLocationy),
+                         (self.mouseClickLocationx - self.growingx,
+                          self.calculatey(self.mouseClickLocationx - self.growingx, self.slope2, self.b2_adj)))
+        pygame.draw.line(self.screen, self.linecolor, (self.mouseClickLocationx, self.mouseClickLocationy),
+                         (self.mouseClickLocationx + self.growingx,
+                          self.calculatey(self.mouseClickLocationx + self.growingx, self.slope1, self.b1_adj)))
+        pygame.draw.line(self.screen, self.linecolor, (self.mouseClickLocationx, self.mouseClickLocationy),
+                         (self.mouseClickLocationx + self.growingx,
+                          self.calculatey(self.mouseClickLocationx + self.growingx, self.slope2, self.b2_adj)))
+
+    def approachXToCenter(self):
+        #increment x param if needed
+        if self.mouseClickLocationx > self.centerx:
+            self.mouseClickLocationx -= 1
+        elif self.mouseClickLocationx < self.centerx:
+            self.mouseClickLocationx += 1
+        else:
+            pass
+        #increment y param if needed
+        if self.mouseClickLocationy > self.centery:
+            self.mouseClickLocationy -= 1
+        elif self.mouseClickLocationy < self.centery:
+            self.mouseClickLocationy += 1
+        else:
+            pass
 
     # Function for drawing O
     def drawing_click_area_o(self):
