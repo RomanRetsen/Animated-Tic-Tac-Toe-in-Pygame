@@ -9,6 +9,7 @@ class ClickArea:
         self.x, self.y = position
         self.screen = screen
         self.g_stats = g_stats
+        self.g_set = g_set
         self.screen_rect = screen.get_rect()
         self.width = g_set.click_area_width
         self.height = g_set.click_area_height
@@ -30,7 +31,8 @@ class ClickArea:
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
-                      self.drawing_click_area_x4, self.drawing_click_area_x5, self.drawing_click_area_x6]
+                      self.drawing_click_area_x4, self.drawing_click_area_x5, self.drawing_click_area_x6,
+                      self.drawing_click_area_x7]
 
         self.clickAreaReset()
 
@@ -43,19 +45,20 @@ class ClickArea:
 
     def calculateCrossCoord(self):
         #line 1 . It's 2 points - top left and bottom right
-        self.currentx1 = self.x1_1 = self.x + self.signOffSetx
+        self.x1_1 = self.x + self.signOffSetx
         self.y1_1 = self.y + self.signOffSety
         self.x1_2 = self.x + self.width - self.signOffSetx
         self.y1_2 = self.y + self.height - self.signOffSety
-        length_of_line = int(math.sqrt((self.x1_1 - self.x1_2)**2 + (self.y1_1 - self.y1_2)**2))
+        self.length_of_line = int(math.sqrt((self.x1_1 - self.x1_2)**2 + (self.y1_1 - self.y1_2)**2))
+        self.half_length_line = int(self.length_of_line / 2)
         # line 2. 2 points - top right and bottom left
-        self.currentx2 = self.x2_1 = self.x + self.width - self.signOffSetx
+        self.x2_1 = self.x + self.width - self.signOffSetx
         self.y2_1 = self.y + self.signOffSety
         self.x2_2 = self.x + self.signOffSetx
         self.y2_2 = self.y + self.height - self.signOffSety
         # cross point
-        self.x_half = self.mouseClickLocationx = self.x + int(self.width /2 )
-        self.y_half = self.mouseClickLocationy = self.y + int(self.height /2 )
+        self.x_half = self.mouseClickLocationx = self.x + int(self.width / 2 )
+        self.y_half = self.mouseClickLocationy = self.y + int(self.height / 2 )
         self.growingx = 0
         self.growingy = 0
         # slope and b info needed for line formula
@@ -67,7 +70,7 @@ class ClickArea:
         self.stage1_x_done = False
         self.stage2_x_done = False
 
-    #For drawing "O" different approach was chosen. All coord. of ellipse put in list
+    #For drawing "O" different approach was chosen. All coord. of dots of the ellipse put in list
     def calculateEllipseCoord(self):
         self.ellipseAnimationSlice = 0
         self.t = 0.1
@@ -92,6 +95,7 @@ class ClickArea:
             self.t += 0.05
             index += 1
 
+    #generating scattered dots in either of 4 areas depending on final location of dot in the circle
     def generatedEllipseDotsSQ(self, index, destinationx, destinationy):
         if destinationx <= self.centerx and destinationy <= self.centery:
             self.ellipseDotsScatteredQuadrated.append([index, list([destinationx, destinationy]),
@@ -113,8 +117,7 @@ class ClickArea:
     ################################################################
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
-        if (self.state == 'b' and not self.g_stats.drawing_click_area) \
-                or ( self.state == 'b' and self.g_stats.drawing_stage2_x):
+        if (self.state == 'b'):
             self.draw_click_area_blank()
         elif self.state == 'd':
             if self.g_stats.gamer_turn == 'x':
@@ -143,40 +146,25 @@ class ClickArea:
                             (self.x + (self.signOffSetx * 2), self.y + self.signOffSety,
                              self.width - (self.signOffSetx * 4), self.height - (self.signOffSety * 2)), 1)
 
+    def randomChooseOFunc(self):
+        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        # self.chosenOFunc = self.oFunc[5]
+        if self.chosenOFunc.__name__ == 'drawing_click_area_o3':
+            random.shuffle(self.ellipseDots)
+
+    def randomChooseXFunc(self):
+        self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
+        # self.chosenXFunc = self.xFunc[6]
+        if self.chosenXFunc.__name__ == 'drawing_click_area_x7':
+            self.generateInitialXCoor_x7()
+
+    #Function for drawing X
     def calculatey(self, x, slope, b):
         return int((x * slope) + b)
 
     def calculatex(self, y, slope, b):
         return int((y - b) / slope)
 
-    def randomChooseOFunc(self):
-        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[5]
-        if self.chosenOFunc.__name__ == 'drawing_click_area_o':
-            pass
-        elif self.chosenOFunc.__name__ == 'drawing_click_area_o2':
-            pass
-        elif self.chosenOFunc.__name__ == 'drawing_click_area_o3':
-            random.shuffle(self.ellipseDots)
-
-    def randomChooseXFunc(self):
-        self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
-        # self.chosenXFunc = self.xFunc[5]
-
-    def generateAdjustedXCoor(self):
-        self.correctionx = self.mouseClickLocationx - self.centerx
-        self.correctiony = self.mouseClickLocationy - self.centery
-        self.x1_1_adj = self.x1_1 + self.correctionx
-        self.x1_2_adj = self.x1_2 + self.correctionx
-        self.y1_2_adj = self.y1_2 + self.correctiony
-        self.x2_1_adj = self.x2_1 + self.correctionx
-        self.x2_2_adj = self.x2_2 + self.correctionx
-        self.y2_2_adj = self.y2_2 + self.correctiony
-
-        self.b1_adj = self.y1_2_adj - self.slope1 * self.x1_2_adj
-        self.b2_adj = self.y2_2_adj - self.slope2 * self.x2_2_adj
-
-    #Function for drawing X
     def drawing_click_area_x(self):
         if self.x1_1 + self.growingx <= self.x1_2:
             pygame.draw.line(self.screen, self.linecolor, (self.x1_1, self.y1_1),
@@ -284,12 +272,13 @@ class ClickArea:
 
     def drawing_click_area_x6(self):
         if not self.stage1_x_done:
+            #initial generateAdjustedXCoor call happens in ckeckClickedArea in my_game.py
+            #It's done there to adjust properly based on mouse clicked coordinates
             if self.x1_1_adj <= self.mouseClickLocationx - self.growingx:
                 self.drawing_adjusted_x()
                 self.growingx += 1
             else:
                 self.stage1_x_done = True
-                self.g_stats.drawing_stage2_x = True
         elif self.stage1_x_done and not self.stage2_x_done:
             if self.mouseClickLocationx != self.centerx or self.mouseClickLocationy != self.centery:
                 self.draw_click_area_blank()
@@ -298,7 +287,6 @@ class ClickArea:
                 self.drawing_adjusted_x()
             else:
                 self.stage2_x_done = True
-                self.g_stats.drawing_stage2_x = False
         elif self.stage1_x_done and self.stage2_x_done:
             self.state = 'x'
             self.g_stats.drawing_click_area = False
@@ -317,6 +305,19 @@ class ClickArea:
                          (self.mouseClickLocationx + self.growingx,
                           self.calculatey(self.mouseClickLocationx + self.growingx, self.slope2, self.b2_adj)))
 
+    def generateAdjustedXCoor(self):
+        self.correctionx = self.mouseClickLocationx - self.centerx
+        self.correctiony = self.mouseClickLocationy - self.centery
+        self.x1_1_adj = self.x1_1 + self.correctionx
+        self.x1_2_adj = self.x1_2 + self.correctionx
+        self.y1_2_adj = self.y1_2 + self.correctiony
+        self.x2_1_adj = self.x2_1 + self.correctionx
+        self.x2_2_adj = self.x2_2 + self.correctionx
+        self.y2_2_adj = self.y2_2 + self.correctiony
+
+        self.b1_adj = self.y1_2_adj - self.slope1 * self.x1_2_adj
+        self.b2_adj = self.y2_2_adj - self.slope2 * self.x2_2_adj
+
     def approachXToCenter(self):
         #increment x param if needed
         if self.mouseClickLocationx > self.centerx:
@@ -332,6 +333,207 @@ class ClickArea:
             self.mouseClickLocationy += 1
         else:
             pass
+
+
+    def drawing_click_area_x7(self):
+        if not self.stage1_x_done:
+            if abs(self.centerx1_adj - self.centerx) > (self.slope1CorrectionParam * 100) \
+                    or abs(self.centery1_adj - self.centery) > (self.slope1CorrectionParam * 100) \
+                    or abs(self.centerx2_adj - self.centerx) > (self.slope2CorrectionParam * 100) \
+                    or abs(self.centery2_adj - self.centery) > (self.slope2CorrectionParam * 100):
+                self.draw_click_area_blank()
+                self.approachX1ToCenter_x7()
+                self.approachX2ToCenter_x7()
+                self.generateAdjustedXCoor_x7()
+                self.drawing_adjusted_x7()
+            else:
+                self.centerx1_adj = self.centerx2_adj = self.centerx
+                self.centery1_adj = self.centery2_adj = self.centery
+                self.stage1_x_done = True
+
+        elif self.stage1_x_done and not self.stage2_x_done:
+            if round(self.slope1_adj, 1) != round(self.slope1, 1) or round(self.slope2_adj, 1) != round(self.slope2, 1):
+                self.draw_click_area_blank()
+                self.generateAdjustedXCoor_x7()
+                self.drawing_adjusted_x7()
+                pass
+            else:
+                self.stage2_x_done = True
+        elif self.stage1_x_done and self.stage2_x_done:
+            self.state = 'x'
+            self.g_stats.drawing_click_area = False
+
+    def approachX1ToCenter_x7(self):
+        #increment x param if needed
+        if self.centerx1_adj > self.centerx \
+                and abs(self.centerx1_adj - self.centerx) > int(self.slope1CorrectionParam * 100):
+            self.centerx1_adj -= int(self.slope1CorrectionParam * 100)
+        elif self.centerx1_adj < self.centerx \
+                and abs(self.centerx1_adj - self.centerx) > int(self.slope1CorrectionParam * 100):
+            self.centerx1_adj += int(self.slope1CorrectionParam * 100)
+        else:
+            pass
+        #increment y param if needed
+        if self.centery1_adj > self.centery \
+                and abs(self.centery1_adj - self.centery) > int(self.slope1CorrectionParam * 100):
+            self.centery1_adj -= int(self.slope1CorrectionParam * 100)
+        elif self.centery1_adj < self.centery \
+                and abs(self.centery1_adj - self.centery) > int(self.slope1CorrectionParam * 100):
+            self.centery1_adj += int(self.slope1CorrectionParam * 100)
+        else:
+            pass
+
+    def approachX2ToCenter_x7(self):
+        #increment x param if needed
+        if self.centerx2_adj > self.centerx \
+                and abs(self.centerx2_adj - self.centerx) > int(self.slope2CorrectionParam * 100):
+            self.centerx2_adj -= int(self.slope2CorrectionParam * 100)
+        elif self.centerx2_adj < self.centerx \
+                and abs(self.centerx2_adj - self.centerx) > int(self.slope2CorrectionParam * 100):
+            self.centerx2_adj += int(self.slope2CorrectionParam * 100)
+        else:
+            pass
+        #increment y param if needed
+        if self.centery2_adj > self.centery \
+                and abs(self.centery2_adj - self.centery) > int(self.slope2CorrectionParam):
+            self.centery2_adj -= int(self.slope2CorrectionParam * 100)
+        elif self.centery2_adj < self.centery \
+                and abs(self.centery2_adj - self.centery)  > int(self.slope2CorrectionParam):
+            self.centery2_adj += int(self.slope2CorrectionParam * 100)
+        else:
+            pass
+
+    def generateAdjustedXCoor_x7(self):
+        self.pivotX1_x7()
+        self.pivotX2_x7()
+        self.x1_1_adj = self.centerx1_adj + self.half_length_line * math.sqrt(1 / (1 + self.slope1_adj ** 2))
+        self.x1_2_adj = self.centerx1_adj - self.half_length_line * math.sqrt(1 / (1 + self.slope1_adj ** 2))
+        self.y1_1_adj = self.centery1_adj + self.slope1_adj * self.half_length_line * math.sqrt(1 / (1 + self.slope1_adj ** 2))
+        self.y1_2_adj = self.centery1_adj - self.slope1_adj * self.half_length_line * math.sqrt(1 / (1 + self.slope1_adj ** 2))
+
+        self.x2_1_adj = self.centerx2_adj + self.half_length_line * math.sqrt(1 / (1 + self.slope2_adj ** 2))
+        self.x2_2_adj = self.centerx2_adj - self.half_length_line * math.sqrt(1 / (1 + self.slope2_adj ** 2))
+        self.y2_1_adj = self.centery2_adj + self.slope2_adj * self.half_length_line * math.sqrt(1 / (1 + self.slope2_adj ** 2))
+        self.y2_2_adj = self.centery2_adj - self.slope2_adj * self.half_length_line * math.sqrt(1 / (1 + self.slope2_adj ** 2))
+
+    def pivotX1_x7(self):
+        #stage 1 (approaching to center of cell) - constant pivoting
+        #once stage 1 is done, stop pivoting at proper line slope
+        if self.stage1_x_done:
+            if abs(round(self.slope1_adj, 1))  < 2:
+                omega = self.slope1CorrectionParam
+            elif abs(round(self.slope1_adj, 1)) >=2 \
+                and abs(round(self.slope1_adj, 1)) < 10:
+                omega = self.slope1CorrectionParam * 10
+            elif abs(round(self.slope1_adj, 1)) >= 10 \
+                and abs(round(self.slope1_adj, 1)) < 50:
+                omega = self.slope1CorrectionParam * 50
+            elif abs(round(self.slope1_adj, 1)) >= 50 \
+                    and abs(round(self.slope1_adj, 1)) < 150:
+                omega = self.slope1CorrectionParam * 150
+            elif abs(round(self.slope1_adj, 1)) >= 150:
+                omega = self.slope1CorrectionParam * 1000
+
+            if abs(round(self.slope1_adj, 1) - round(self.slope1, 1)) <= abs(omega):
+                self.slope1_adj = self.slope1
+            else:
+                self.pivotnocheckX1_x7()
+        else:
+            self.pivotnocheckX1_x7()
+
+    def pivotnocheckX1_x7(self):
+        # print(f'slop1_adj  {self.slope1_adj}')
+        if round(self.slope1_adj) >= self.length_of_line - 2.5:
+            self.slope1_adj = (self.slope1_adj - 1) * (-1)
+        elif round(self.slope1_adj) >= 0 and round(self.slope1_adj) < 2:
+            self.slope1_adj += self.slope1CorrectionParam
+        elif round(self.slope1_adj) >= 2 and round(self.slope1_adj) < 10:
+            self.slope1_adj += self.slope1CorrectionParam * 10
+        elif round(self.slope1_adj) >= 10 and round(self.slope1_adj) < 50:
+            self.slope1_adj += self.slope1CorrectionParam * 50
+        elif round(self.slope1_adj) >= 50 and round(self.slope1_adj) < 150:
+            self.slope1_adj += self.slope1CorrectionParam * 150
+        elif round(self.slope1_adj) >= 150:
+            self.slope1_adj += self.slope1CorrectionParam * 1000
+
+        elif round(self.slope1_adj) < 0 and round(self.slope1_adj) > -2:
+            self.slope1_adj += self.slope1CorrectionParam
+        elif round(self.slope1_adj) <= -2 and round(self.slope1_adj) > -10:
+            self.slope1_adj += self.slope1CorrectionParam * 10
+        elif round(self.slope1_adj) <= -10 and round(self.slope1_adj) > -50:
+            self.slope1_adj += self.slope1CorrectionParam * 50
+        elif round(self.slope1_adj) <= -50 and round(self.slope1_adj) > -150:
+            self.slope1_adj += self.slope1CorrectionParam * 150
+        elif round(self.slope1_adj) <= -150:
+            self.slope1_adj += self.slope1CorrectionParam * 1000
+
+
+    def pivotX2_x7(self):
+        if self.stage1_x_done:
+            if abs(round(self.slope2_adj, 1))  < 2:
+                omega = self.slope2CorrectionParam
+            elif abs(round(self.slope2_adj, 1)) >=2 \
+                    and abs(round(self.slope2_adj, 1)) < 10:
+                omega = self.slope2CorrectionParam * 10
+            elif abs(round(self.slope2_adj, 1)) >= 10 \
+                    and abs(round(self.slope2_adj, 1)) < 50:
+                omega = self.slope2CorrectionParam * 50
+            elif abs(round(self.slope2_adj, 1)) >= 50 \
+                    and abs(round(self.slope2_adj, 1)) < 150:
+                omega = self.slope2CorrectionParam * 150
+            elif abs(round(self.slope2_adj, 1)) >= 150:
+                omega = self.slope2CorrectionParam * 1000
+
+            if abs(round(self.slope2_adj, 1) - round(self.slope2, 1)) <= abs(omega):
+                self.slope2_adj = self.slope2
+            else:
+                self.pivotnocheckX2_x7()
+        else:
+            self.pivotnocheckX2_x7()
+
+    def pivotnocheckX2_x7(self):
+
+        if round(self.slope2_adj) <= -(self.length_of_line - 2.5):
+            self.slope2_adj = (self.slope2_adj) * (-1)
+        elif round(self.slope2_adj) >= 0 and round(self.slope2_adj) < 2:
+            self.slope2_adj -= self.slope2CorrectionParam
+        elif round(self.slope2_adj) >= 2 and round(self.slope2_adj) < 10:
+            self.slope2_adj -= self.slope2CorrectionParam * 10
+        elif round(self.slope2_adj) >= 10 and round(self.slope2_adj) < 50:
+            self.slope2_adj -= self.slope2CorrectionParam * 50
+        elif round(self.slope2_adj) >= 50 and round(self.slope2_adj) < 150:
+            self.slope2_adj -= self.slope2CorrectionParam * 150
+        elif round(self.slope2_adj) >= 150:
+            self.slope2_adj -= self.slope2CorrectionParam * 1000
+
+        elif round(self.slope2_adj) < 0 and round(self.slope2_adj) > -2:
+            self.slope2_adj -= self.slope2CorrectionParam
+        elif round(self.slope2_adj) <= -2 and round(self.slope2_adj) > -10:
+            self.slope2_adj -= self.slope2CorrectionParam * 10
+        elif round(self.slope2_adj) <= -10 and round(self.slope2_adj) > -50:
+            self.slope2_adj -= self.slope2CorrectionParam * 50
+        elif round(self.slope2_adj) <= -50 and round(self.slope2_adj) > -150:
+            self.slope2_adj -= self.slope2CorrectionParam * 150
+        elif round(self.slope2_adj) <= -150:
+            self.slope2_adj -= self.slope2CorrectionParam * 1000
+
+    def drawing_adjusted_x7(self):
+        pygame.draw.line(self.screen, self.linecolor, (self.x1_1_adj, self.y1_1_adj), (self.x1_2_adj, self.y1_2_adj))
+        pygame.draw.line(self.screen, self.linecolor, (self.x2_1_adj, self.y2_1_adj), (self.x2_2_adj, self.y2_2_adj))
+
+    def generateInitialXCoor_x7(self):
+        self.centerx1_adj = self.half_length_line
+        self.centery1_adj = self.centery2_adj = self.g_set.game_screen_height
+        self.centerx2_adj = self.g_set.game_screen_width - self.half_length_line
+        self.slope1_adj = 0
+        self.slope2_adj = 0
+        slopeCorrectionParamOption = [0.01, 0.02, 0.03]
+        self.slope1CorrectionParam = random.choice(slopeCorrectionParamOption)
+        slopeCorrectionParamOption.remove(self.slope1CorrectionParam)
+        self.slope2CorrectionParam = random.choice(slopeCorrectionParamOption)
+        # self.slope1CorrectionParam = 0.01
+        # self.slope2CorrectionParam = 0.01
+        self.g_stats.drawing_stage1_x = True
 
     # Function for drawing O
     def drawing_click_area_o(self):

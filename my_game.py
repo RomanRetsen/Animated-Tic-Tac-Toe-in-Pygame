@@ -120,7 +120,12 @@ def createClickAreas(game_screen, g_set, g_stats):
     return areasList
 
 def drawClickAreas(screen, g_set, g_stats, areasList):
-    for area in areasList:
+    for area in [al_blank for al_blank in areasList if al_blank.state == 'b']:
+        area.draw_click_area()
+    for area in [al_blank for al_blank in areasList if al_blank.state == 'x'
+                                                       or al_blank.state == 'o']:
+        area.draw_click_area()
+    for area in [al for al in areasList if al.state == 'd']:
         area.draw_click_area()
 
 def drawWinningLine(game_screen, g_set, g_stats, mBoard):
