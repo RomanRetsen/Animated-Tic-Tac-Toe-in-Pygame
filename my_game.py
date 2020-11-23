@@ -7,7 +7,7 @@ from MessageBoard import *
 def run_game():
     pygame.init()
     clock = pygame.time.Clock()
-    g_set = Settings(boardwidth=400, boardheight=400, message_board_height=50)
+    g_set = Settings(boardwidth=600, boardheight=600, message_board_height=50)
     g_stats = Stats(g_set)
     game_screen = pygame.display.set_mode((g_set.game_screen_width,
                                            g_set.game_screen_height + g_set.message_board_height))

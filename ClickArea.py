@@ -27,7 +27,8 @@ class ClickArea:
         #list of functions of drawing sign "O"  to random pick from.
         self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
                       self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6,
-                      self.drawing_click_area_o7, self.drawing_click_area_o8, self.drawing_click_area_o9]
+                      self.drawing_click_area_o7, self.drawing_click_area_o8, self.drawing_click_area_o9,
+                      self.drawing_click_area_o10]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
@@ -90,7 +91,7 @@ class ClickArea:
             self.ellipseDots.append([index, tuple((tempx, tempy))])
             self.ellipseDotsScattered.append([index, list([tempx, tempy]),
                                               list([random.randint(self.x, self.x + self.width),
-                                                    random.randint(self.y, self.y + self.height)])])
+                                                    random.randint(self.y, self.y + self.height)]), 0])
             self.generatedEllipseDotsSQ(index, tempx, tempy)
             self.t += 0.05
             index += 1
@@ -148,7 +149,7 @@ class ClickArea:
 
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[5]
+        # self.chosenOFunc = self.oFunc[9]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o3':
             random.shuffle(self.ellipseDots)
 
@@ -734,6 +735,83 @@ class ClickArea:
             self.state = 'o'
             self.g_stats.drawing_click_area = False
 
+    def drawing_click_area_o10(self):
+        # self.draw_click_area_blank()
+
+        scattered_dots_arranged = True
+        for index in range(len(self.ellipseDotsScattered) ):
+            if self.ellipseDotsScattered[index][3] == 0:
+                self.generateOrbitTrajectory(index, self.ellipseDotsScattered)
+                scattered_dots_arranged = False
+            elif self.ellipseDotsScattered[index][3] == 1:
+                self.continueOrbitTrajectory(index, self.ellipseDotsScattered)
+                scattered_dots_arranged = False
+            elif self.ellipseDotsScattered[index][3] == 2:
+                if ((self.ellipseDotsScattered[index][1][0] != self.ellipseDotsScattered[index][2][0]) or
+                        (self.ellipseDotsScattered[index][1][1] != self.ellipseDotsScattered[index][2][1])):
+                    self.approachToLocation(index, self.ellipseDotsScattered)
+                    scattered_dots_arranged = False
+
+        if not scattered_dots_arranged:
+            for index in range(len(self.ellipseDotsScattered) ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index][2]))
+        else:
+            for index in range(len(self.ellipseDotsScattered) -1 ):
+                pygame.draw.line(self.screen, self.linecolor,
+                                 (self.ellipseDotsScattered[index][2]), (self.ellipseDotsScattered[index + 1][2]))
+            pygame.draw.line(self.screen, self.linecolor,
+                             self.ellipseDotsScattered[0][2], self.ellipseDotsScattered[-1][2])
+            self.state = 'o'
+            self.g_stats.drawing_click_area = False
+
+
+    # ellipseDotsScattered
+    # 0 - index in the final sequence
+    # 1 - final location coord
+    # 2 - current location coord
+    # 3 - state of animation (for function 10, there are 3 stages)
+    # 4 theta parameter (angular parameter 0 * 2PI or 360degree)
+    # 5 radius of orbital animation. Distance from random placement and center of the cell
+    # 6 speed of orbital animation.
+    # 7 counter of dots for orbital trajectory
+
+    def generateOrbitTrajectory(self, index, ellipseDotsScattered):
+        theta = math.atan2(self.centery - self.ellipseDotsScattered[index][2][1],
+                           self.centerx - self.ellipseDotsScattered[index][2][0])
+        orbital_radius = math.sqrt(((self.centerx - ellipseDotsScattered[index][2][0]) ** 2) +
+                                   ((self.centery - ellipseDotsScattered[index][2][1]) ** 2))
+        #start and finish theta
+        ellipseDotsScattered[index].append(round(theta, 1))
+        ellipseDotsScattered[index].append(round(orbital_radius))
+        orbitTrajectorySpeedOptions = {0.01: 628, 0.02: 314, 0.03: 209, 0.04: 157, 0.05: 125, 0.1: 62}
+        orbitTrajectorySpeed = random.choice(list(orbitTrajectorySpeedOptions.keys()))
+        ellipseDotsScattered[index].append(orbitTrajectorySpeed)
+
+        #theta counter -  - full circle
+        ellipseDotsScattered[index].append(orbitTrajectorySpeedOptions[orbitTrajectorySpeed])
+        ellipseDotsScattered[index][3] = 1
+
+    def continueOrbitTrajectory(self, index, ellipseDotsScattered):
+        if ellipseDotsScattered[index][7] > 0:
+            #trajactory angle + trajectory speed
+            if ellipseDotsScattered[index][4] + ellipseDotsScattered[index][6] >= 3.14:
+                ellipseDotsScattered[index][4]  = -3.14
+                ellipseDotsScattered[index][7] -= 1
+            else:
+                ellipseDotsScattered[index][4] += ellipseDotsScattered[index][6]
+                ellipseDotsScattered[index][7] -= 1
+
+            tempx = int(self.x + ellipseDotsScattered[index][5] *
+                        math.cos(ellipseDotsScattered[index][4]) + int(self.width / 2))
+            tempy = int(self.y + ellipseDotsScattered[index][5] *
+                        math.sin(ellipseDotsScattered[index][4]) + int(self.height / 2))
+            ellipseDotsScattered[index][2][0] = tempx
+            ellipseDotsScattered[index][2][1] = tempy
+
+        else:
+            ellipseDotsScattered[index][3] = 2
+
     def approachToLocation(self, index, ellipseDotsScattered):
         #increment x param if needed
         if ellipseDotsScattered[index][2][0] > ellipseDotsScattered[index][1][0]:
@@ -749,6 +827,9 @@ class ClickArea:
             ellipseDotsScattered[index][2][1] += 1
         else:
             pass
+
+
+
 
 
 
