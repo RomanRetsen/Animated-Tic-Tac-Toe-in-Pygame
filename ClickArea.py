@@ -28,7 +28,7 @@ class ClickArea:
         self.oFunc = [self.drawing_click_area_o, self.drawing_click_area_o2, self.drawing_click_area_o3,
                       self.drawing_click_area_o4, self.drawing_click_area_o5, self.drawing_click_area_o6,
                       self.drawing_click_area_o7, self.drawing_click_area_o8, self.drawing_click_area_o9,
-                      self.drawing_click_area_o10]
+                      self.drawing_click_area_o10, self.drawing_click_area_o11]
 
         #list of functions of drawing sign "X"  to random pick from.
         self.xFunc = [self.drawing_click_area_x, self.drawing_click_area_x2, self.drawing_click_area_x3,
@@ -115,6 +115,11 @@ class ClickArea:
                                                        list([random.randint(destinationx, self.x + self.width),
                                                              random.randint(self.y, destinationy)])])
 
+    def relocate_dots_center_cell(self, ellipseDotsScattered):
+        for index in range(len(ellipseDotsScattered)):
+            ellipseDotsScattered[index][2][0]  = self.centerx
+            ellipseDotsScattered[index][2][1] = self.centery
+
     ################################################################
     #states b-blank; d-drawing animation; x - it's X; o - it's O
     def draw_click_area(self):
@@ -148,10 +153,12 @@ class ClickArea:
                              self.width - (self.signOffSetx * 4), self.height - (self.signOffSety * 2)), 1)
 
     def randomChooseOFunc(self):
-        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        # self.chosenOFunc = self.oFunc[9]
+        # self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        self.chosenOFunc = self.oFunc[10]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o3':
             random.shuffle(self.ellipseDots)
+        elif self.chosenOFunc.__name__ == 'drawing_click_area_o11':
+            self.relocate_dots_center_cell(self.ellipseDotsScattered)
 
     def randomChooseXFunc(self):
         self.chosenXFunc = self.xFunc[random.randint(0, len(self.xFunc) - 1)]
@@ -765,6 +772,8 @@ class ClickArea:
             self.state = 'o'
             self.g_stats.drawing_click_area = False
 
+    def drawing_click_area_o11(self):
+        self.drawing_click_area_o6()
 
     # ellipseDotsScattered
     # 0 - index in the final sequence
@@ -827,6 +836,7 @@ class ClickArea:
             ellipseDotsScattered[index][2][1] += 1
         else:
             pass
+
 
 
 
