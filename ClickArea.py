@@ -153,8 +153,8 @@ class ClickArea:
                              self.width - (self.signOffSetx * 4), self.height - (self.signOffSety * 2)), 1)
 
     def randomChooseOFunc(self):
-        # self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
-        self.chosenOFunc = self.oFunc[10]
+        self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        # self.chosenOFunc = self.oFunc[10]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o3':
             random.shuffle(self.ellipseDots)
         elif self.chosenOFunc.__name__ == 'drawing_click_area_o11':
