@@ -154,6 +154,7 @@ class ClickArea:
 
     def randomChooseOFunc(self):
         self.chosenOFunc = self.oFunc[random.randint(0, len(self.oFunc) - 1)]
+        #added note for git testing
         # self.chosenOFunc = self.oFunc[10]
         if self.chosenOFunc.__name__ == 'drawing_click_area_o3':
             random.shuffle(self.ellipseDots)
