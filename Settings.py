@@ -1,3 +1,4 @@
+#adding comment in master
 class Settings:
 
     def __init__(self, boardwidth, boardheight, message_board_height):
