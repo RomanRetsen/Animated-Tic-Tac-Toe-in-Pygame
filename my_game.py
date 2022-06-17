@@ -1,5 +1,5 @@
 import sys
-from src.Settings import *
+from Settings import *
 from Stats import *
 from ClickArea import *
 from MessageBoard import *
