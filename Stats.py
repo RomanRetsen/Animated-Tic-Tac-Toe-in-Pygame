@@ -3,6 +3,7 @@
 #test comment
 # just addede now
 # just addede now 2
+# just addede now 3
 class Stats:
     def __init__(self, g_set):
         self.g_set = g_set
