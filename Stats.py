@@ -4,6 +4,7 @@
 # just addede now
 # just addede now 2
 # just added 4
+# another changes done by someone else
 
 class Stats:
     def __init__(self, g_set):
